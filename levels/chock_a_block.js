@@ -7,10 +7,6 @@ class ChockABlock extends Level {
   constructor(apiKey, account, venue, stock) {
     super(apiKey, account, venue, stock);
 
-    this.headers = {
-      'X-Starfighter-Authorization': this.apiKey
-    };
-
     this.filledCount = 0;
     this.filledTarget = 100000;
     this.interval = 5000;
@@ -117,32 +113,6 @@ Goto #1.
           });
         });
       }, this.orderSleep);
-    });
-  }
-
-  getAQuote(cb) {
-    console.log('Getting a quote...');
-
-    const options = {
-      url: this.getQuoteUrl,
-      headers: this.headers,
-      method: 'get'
-    };
-
-    request(options, (err, response, body) => {
-      if (err) {
-        cb('Error', err);
-        return;
-      }
-      const quote = JSON.parse(body);
-      if (!quote || !quote.ok) {
-        console.log('body not ok', quote)
-        cb(null, null);
-        return;
-      }
-
-      console.log('quote:', quote);
-      cb(quote, null);
     });
   }
 }
