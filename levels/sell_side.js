@@ -1,15 +1,9 @@
 'use strict';
-const request = require('request');
 const Level = require('./level').Level;
 
 class SellSide extends Level {
   constructor(apiKey, account, venue, stock) {
     super(apiKey, account, venue, stock);
-    this.totalPurchaseCount = 0;
-    this.totalPurchaseCost = 0;
-    this.currentProfit = 0;
-    this.holdCount = 0;
-    this.lastPurchasePrice = Number.MAX_VALUE;
   }
 
   solve() {
@@ -21,11 +15,11 @@ class SellSide extends Level {
   }
 
   aggressiveSolution(done) {
-    if (this.currentProfit >= 1000000) {
+    if (this.currentBalance >= 1000000) {
       return done();
     }
 
-    this.getAQuote((quote, err) => {
+    this.getAQuote((err, quote) => {
       if (this.holdCount < 500 && quote.ask && typeof quote.ask === 'number') {
         this.timeBoundOrder(quote.ask, quote.askSize, 'limit', 'buy', 1000, (err, order) => {
           this.consumeFilledOrder(order);
@@ -79,35 +73,6 @@ class SellSide extends Level {
         });
       }
     });
-  }
-
-  printState() {
-    console.log('Current profit:', this.currentProfit, '| Stock count held:', this.holdCount, '| Average cost:', this.averagePurchasePrice());
-  }
-
-  consumeFilledOrder(order) {
-    if (order.direction === 'buy') {
-      order.fills.map((fill) => {
-        this.totalPurchaseCount += fill.qty;
-        this.totalPurchaseCost += fill.qty * fill.price;
-        this.currentProfit -= fill.qty * fill.price;
-        this.holdCount += fill.qty;
-        this.lastPurchasePrice = fill.price;
-      });
-    } else {
-      order.fills.map((fill) => {
-        this.currentProfit += fill.qty * fill.price;
-        this.holdCount -= fill.qty;
-      });
-    }
-  }
-
-  averagePurchasePrice() {
-    if (this.totalPurchaseCount === 0) {
-      return 0;
-    }
-
-    return Math.floor(this.totalPurchaseCost / this.totalPurchaseCount);
   }
 }
 

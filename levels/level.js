@@ -1,5 +1,6 @@
 'use strict';
 const request = require('request');
+const logger = require('winston');
 
 class Level {
   constructor(apiKey, account, venue, stock) {
@@ -16,14 +17,21 @@ class Level {
 
     this.getQuoteUrl = this.baseUrl + '/venues/' + this.venue + '/stocks/' + this.stock + '/quote';
     this.orderUrl = this.baseUrl + '/venues/' + this.venue + '/stocks/' + this.stock + '/orders';
+
+    this.totalPurchaseCount = 0;
+    this.totalPurchaseCost = 0;
+    this.currentBalance = 0;
+    this.holdCount = 0;
+    this.lastPurchasePrice = Number.MAX_VALUE;
+    this.recentSales = [];
   }
 
   solve(levelName) {
-    console.log('Solving', levelName);
+    logger.info('Solving', levelName);
   }
 
   getAQuote(cb) {
-    //console.log('Getting a quote...');
+    logger.debug('Getting a quote...');
 
     const options = {
       url: this.getQuoteUrl,
@@ -33,22 +41,25 @@ class Level {
 
     request(options, (err, response, body) => {
       if (err) {
-        cb('Error', err);
+        cb(err, 'Error');
         return;
       }
       const quote = JSON.parse(body);
       if (!quote || !quote.ok) {
-        console.log('body not ok', quote)
+        logger.error('body not ok', quote)
         cb(null, null);
         return;
       }
 
-      cb(quote, null);
+      this.quotePostProcessing(quote);
+      this.printQuote(quote);
+
+      cb(null, quote);
     });
   }
 
   order(price, qty, orderType, direction, cb) {
-    console.log('Order:', direction, this.stock, '-', qty, '*', price);
+    logger.info('Order:', direction, this.stock, '-', qty, '*', price);
 
     const options = {
       url: this.orderUrl,
@@ -91,8 +102,8 @@ class Level {
     };
 
     request(options, (err, response, body) => {
-      //console.log('Order cancelled.');
-      //console.log(body);
+      logger.debug('Order cancelled.');
+      logger.debug(body);
 
       cb(err, body);
     });
@@ -106,10 +117,89 @@ class Level {
     };
 
     request(options, (err, response, body) => {
-      //console.log('status: ', body);
+      logger.debug('order status: ', body);
       const order = JSON.parse(body);
       cb(err, order);
     });
+  }
+
+  consumeFilledOrder(order) {
+    if (order.direction === 'buy') {
+      order.fills.map((fill) => {
+        this.totalPurchaseCount += fill.qty;
+        this.totalPurchaseCost += fill.qty * fill.price;
+        this.currentBalance -= fill.qty * fill.price;
+        this.holdCount += fill.qty;
+        this.lastPurchasePrice = fill.price;
+
+        //logger.info('***Purchased', fill.qty, '@', fill.price);
+        console.log('\x1b[36m', '***Purchased', fill.qty, '@', fill.price ,'\x1b[0m');
+      });
+    } else {
+      order.fills.map((fill) => {
+        this.currentBalance += fill.qty * fill.price;
+        this.holdCount -= fill.qty;
+
+        //logger.info('***Sold', fill.qty, '@', fill.price);
+        console.log('\x1b[36m', '***Sold', fill.qty, '@', fill.price ,'\x1b[0m');
+      });
+    }
+  }
+
+  printQuote(quote) {
+    let askValue = quote.ask;
+    if (!askValue) {
+      askValue = 'NA';
+    }
+
+    let bidValue = quote.bid;
+    if (!bidValue) {
+      bidValue = 'NA';
+    }
+
+    let lastValue = quote.last;
+    if (!lastValue) {
+      lastValue = 'NA';
+    }
+
+    let averageValue = this.averageRecentSales();
+    if (!averageValue) {
+      averageValue = 'NA';
+    }
+
+    console.log('ASK:', askValue, 'BID:', bidValue, 'LAST:', lastValue, 'AVG:', averageValue);
+  }
+
+  quotePostProcessing(quote) {
+    if (quote.last) {
+      if (this.recentSales.length >= 50) {
+        this.recentSales.shift(); // remove the first value.
+      }
+
+      this.recentSales.push(quote.last);
+    }
+  }
+
+  averageRecentSales() {
+    if (!this.recentSales || this.recentSales.length < 1) {
+      return null;
+    }
+
+    return this.recentSales.reduce((prev, curr) => {
+      return prev + curr;
+    }, 0)/this.recentSales.length;
+  }
+
+  averagePurchasePrice() {
+    if (this.totalPurchaseCount === 0) {
+      return 0;
+    }
+
+    return Math.floor(this.totalPurchaseCost / this.totalPurchaseCount);
+  }
+
+  printState() {
+    console.log('Current balance:', this.currentBalance, '| Stock count held:', this.holdCount, '| Average cost:', this.averagePurchasePrice());
   }
 }
 
