@@ -3,6 +3,7 @@ const FirstSteps = require('./levels/first_steps').FirstSteps;
 const ChockABlock = require('./levels/chock_a_block').ChockABlock;
 const SellSide = require('./levels/sell_side').SellSide;
 const DuelingBulldozers = require('./levels/dueling_bulldozers').DuelingBulldozers;
+const IrrationalExuberance = require('./levels/irrational_exuberance').IrrationalExuberance;
 
 const fs = require('fs');
 const request = require('request');
@@ -10,10 +11,10 @@ const request = require('request');
 const winston = require('winston');
 winston.level = 'info';
 
-let account = '';
-let venue = '';
-let stock = '';
-const levelName = 'dueling_bulldozers';
+let account;
+let venue;
+let stock;
+const levelName = 'irrational_exuberance';
 
 // real entry point
 fs.readFile('api.key', {encoding: 'utf-8'}, function (err, data) {
@@ -69,6 +70,11 @@ fs.readFile('api.key', {encoding: 'utf-8'}, function (err, data) {
         case 'dueling_bulldozers':
           const duelingBulldozers = new DuelingBulldozers(apiKey, account, venue, stock);
           duelingBulldozers.solve();
+          break;
+
+        case 'irrational_exuberance':
+          const irrationalExuberance = new IrrationalExuberance(apiKey, account, venue, stock);
+          irrationalExuberance.solve();
           break;
 
         default:

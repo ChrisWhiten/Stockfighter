@@ -84,6 +84,10 @@ class Level {
   timeBoundOrder(price, qty, orderType, direction, timeout, cb) {
     this.order(price, qty, orderType, direction, (err, body) => {
       setTimeout(() => {
+        if (err) {
+          console.log('ERROR:', err);
+          return cb(err, null);
+        }
         const orderId = body.id;
         this.cancel(orderId, (err, body) => {
           this.getOrderStatus(orderId, (err, order) => {
@@ -117,6 +121,9 @@ class Level {
     };
 
     request(options, (err, response, body) => {
+      if (err) {
+        return cb(err, null);
+      }
       logger.debug('order status: ', body);
       const order = JSON.parse(body);
       cb(err, order);
@@ -124,6 +131,10 @@ class Level {
   }
 
   consumeFilledOrder(order) {
+    if (!order || !order.fills) {
+      console.log('ERROR', order);
+      return;
+    }
     if (order.direction === 'buy') {
       order.fills.map((fill) => {
         this.totalPurchaseCount += fill.qty;
