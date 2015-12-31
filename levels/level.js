@@ -214,4 +214,4 @@ class Level {
   }
 }
 
-module.exports.Level = Level;
+module.exports = Level;

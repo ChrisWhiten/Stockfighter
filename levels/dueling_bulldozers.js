@@ -1,5 +1,5 @@
 'use strict';
-const Level = require('./level').Level;
+const Level = require('./level');
 const logger = require('winston');
 
 class DuelingBulldozers extends Level {
@@ -91,4 +91,4 @@ class DuelingBulldozers extends Level {
   }
 }
 
-module.exports.DuelingBulldozers = DuelingBulldozers;
+module.exports = DuelingBulldozers;

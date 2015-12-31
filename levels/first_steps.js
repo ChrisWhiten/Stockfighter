@@ -1,5 +1,5 @@
 'use strict';
-const Level = require('./level').Level;
+const Level = require('./level');
 const logger = require('winston');
 
 class FirstSteps extends Level {
@@ -22,4 +22,4 @@ class FirstSteps extends Level {
   }
 }
 
-module.exports.FirstSteps = FirstSteps;
+module.exports = FirstSteps;

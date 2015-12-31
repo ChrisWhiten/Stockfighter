@@ -1,5 +1,5 @@
 'use strict';
-const Level = require('./level').Level;
+const Level = require('./level');
 
 class SellSide extends Level {
   constructor(apiKey, account, venue, stock) {
@@ -76,4 +76,4 @@ class SellSide extends Level {
   }
 }
 
-module.exports.SellSide = SellSide;
+module.exports = SellSide;

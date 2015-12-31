@@ -1,5 +1,5 @@
 'use strict';
-const Level = require('./level').Level;
+const Level = require('./level');
 const logger = require('winston');
 const fs = require('fs');
 
@@ -159,4 +159,4 @@ class IrrationalExuberance extends Level {
   }
 }
 
-module.exports.IrrationalExuberance = IrrationalExuberance;
+module.exports = IrrationalExuberance;

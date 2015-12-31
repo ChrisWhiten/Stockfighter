@@ -1,6 +1,6 @@
 'use strict';
 const request = require('request');
-const Level = require('./level').Level;
+const Level = require('./level');
 const logger = require('winston');
 
 
@@ -74,4 +74,4 @@ class ChockABlock extends Level {
   }
 }
 
-module.exports.ChockABlock = ChockABlock;
+module.exports = ChockABlock;
